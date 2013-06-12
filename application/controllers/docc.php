@@ -1,0 +1,420 @@
+<?php
+
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+/**
+ * Master data Site
+ *
+ * @author ronnysugianto
+ */
+
+class docc extends MY_Controller {
+
+    var $doc;
+    var $user;
+    var $doc_status;
+    var $tablegenerator;
+    var $user_login;
+    var $user_ability;
+    var $image_real_path;
+    var $upload_setting;
+    var $resize;
+    var $bulk_action_list;
+
+    function __construct() {
+        parent:: __construct();
+
+        $this->user_login = $this->session->userdata('userlogin');
+        $this->user_ability = $this->user_login['ability'];
+
+        $this->load->library('myme_library/class/TableGenerator');
+        $this->load->model('doc_model');
+        $this->load->model('user_model');
+        $this->tablegenerator = new TableGenerator();
+        $this->doc = new doc_model();
+        $this->user = new user_model();
+        $this->image_real_path = $this->base->get_realpath('../assets/images/');
+        $this->bulk_action_list = array('-1'=>'MARK AS REJECTED','1'=>'MARK AS APPROVED', '2'=>'DELETE');
+
+        $this->upload_setting = array(
+            'allowed_types' => 'jpg|jpeg|gif|png',
+            'upload_path' => $this->image_real_path,
+            'max_size' => 2000,
+            'file_name' => time(),
+        );
+
+        $this->resize = array(
+            'new_image' => $this->image_real_path,
+            'maintain_ration' => true,
+            'width' => 600,
+            'height' => 350
+        );
+    }
+
+    function index($start = 0) {
+        $limit = 10;
+        // SET FILTER CRITERIA
+        $indexs = array('ref_id','status','type','created_by','status_date','created_for','priority','sorted_by','page');
+        $filter = $this->uri->uri_to_assoc(3,$indexs);
+        $uri_seg = count($this->uri->segment_array());
+
+        if($filter['page']){
+            $start = $filter['page'];
+            unset($filter['page']);
+        }else{
+            $start = end($this->uri->segments);
+            if(!is_numeric($start)) $start = 0;
+        }
+
+        $data = $this->base->baseImport(array('datepicker'));
+
+        $filter = $this->validateSetting($filter, $indexs);
+        $data['filter'] = $filter;
+
+        $custom_function = array(
+        'modify_row_data' => function($row, $key) {
+            if($key === 'status') $row->$key = $this->doc_status[$row->$key];
+            return '';
+        });
+
+        $query = $this->doc->readAll($start, $limit, $filter);
+
+        $data['doctable'] = $this->tablegenerator->generateTable(array(
+            'type' => 'ITEM',
+            'idAndName' => 'doctable',
+            'no_start' => $start + 1,
+            'result' => $query->result(),
+            'iditem' => 'iddocument',
+            'header' => array(
+                array('data' => 'Ref ID', 'width' => '8%'),
+                array('data' => 'Type', 'width' => '15%'),
+                array('data' => 'Description', 'width' => '30%'),
+                array('data' => 'Created For', 'width' => '10%'),
+                array('data' => 'Status', 'width' => '10%'),
+                array('data' => 'Priority', 'width' => '10%'),
+                array('data' => 'Created Date', 'width' => '10%'),
+            ),
+            'itemlist' => array('iddocument'=>'text','type'=>'text','description'=>'longtext_with_excerpt','created_for_name'=>'text','status'=>'text','priority'=>'text','created_date'=>'text',
+                array('data' => 'View', 'link' => base_url() . 'index.php/docc/view/', 'use_iditem' => true, 'action_group' => true, 'use_btn' => false)),
+            'directory' => '',
+            'controller' => 'docc',
+            'custom_function' => $custom_function,
+            'useedit' => false,
+            'usedelete' => true,
+            'usecheckbox' => true,
+            'action_group' => true,
+            'moreAttr' => 'width=90%',
+            'pagination' => array('base_url' => base_url().'index.php/docc/index/'.$this->construct_url($filter), 'total_rows' => $this->doc->row_count($filter), 'per_page' => $limit, 'num_links' => 10,'uri_segment'=>$uri_seg),
+        ));
+
+        $data['doc_status'] = $this->doc_status;
+        $data['created_for_list'] = $this->user->get_list_by_role('DIRECTOR');
+        $data['created_by_list'] = $this->user->get_list_by_role('SECRETARY');
+        $data['priority_list'] = $this->priority_list;
+        $data['doc_types'] = $this->doc_types;
+        $data['sorted_list'] = $this->sorted_by;
+        $data['bulk_action_list'] = $this->bulk_action_list;
+
+        $this->base->array_unshift_assoc($data['doc_status'], 'null', '');
+        $this->base->array_unshift_assoc($data['created_for_list'], 'null', '');
+        $this->base->array_unshift_assoc($data['created_by_list'], 'null', '');
+        $this->base->array_unshift_assoc($data['priority_list'], 'null', '');
+        $this->base->array_unshift_assoc($data['doc_types'], 'null', '');
+        $this->base->array_unshift_assoc($data['sorted_list'], 'null', '');
+
+        $this->load_view_with_layout('Document List', 'doc/index', $data);
+    }
+
+    function approved($start = 0){
+
+        $limit = 15;
+        $filter = array('page'=>$start,'status'=>'1','sorted_by'=>'2');
+        $uri_seg = count($this->uri->segment_array());
+
+        $custom_function = array(
+        'modify_row_data' => function($row, $key) {
+            if($key === 'status') $row->$key = $this->doc_status[$row->$key];
+            return '';
+        });
+
+        $query = $this->doc->readAll($start, $limit, $filter);
+
+        $data['doctable'] = $this->tablegenerator->generateTable(array(
+            'type' => 'ITEM',
+            'idAndName' => 'doctable',
+            'no_start' => $start + 1,
+            'result' => $query->result(),
+            'iditem' => 'iddocument',
+            'header' => array(
+                array('data' => 'Ref ID', 'width' => '8%'),
+                array('data' => 'Type', 'width' => '10%'),
+                array('data' => 'Description', 'width' => '25%'),
+                array('data' => 'Created For', 'width' => '10%'),
+                array('data' => 'Status', 'width' => '10%'),
+                array('data' => 'Priority', 'width' => '10%'),
+                array('data' => 'Created Date', 'width' => '10%'),
+                array('data' => 'View', 'width' => '7%'),
+            ),
+            'itemlist' => array('iddocument'=>'text','type'=>'text','description'=>'longtext_with_excerpt','created_for_name'=>'text','status'=>'text','priority'=>'text','created_date'=>'text',
+                array('data' => 'View', 'link' => 'javascript:alert("test")', 'use_iditem' => false, 'action_group' => false, 'use_btn' => true)),
+            'directory' => '',
+            'controller' => 'docc',
+            'custom_function' => $custom_function,
+            'useedit' => false,
+            'usedelete' => false,
+            'usecheckbox' => false,
+            'action_group' => false,
+            'moreAttr' => 'width=90%',
+            'pagination' => array('base_url' => base_url().'index.php/docc/approved/', 'total_rows' => $this->doc->row_count($filter), 'per_page' => $limit, 'num_links' => 10,'uri_segment'=>$uri_seg),
+        ));
+
+        $this->load_view_with_layout('Document List', 'doc/approved', $data);
+    }
+
+    function pending($start = 0){
+
+        $limit = 15;
+        $filter = array('page'=>$start,'status'=>'0','sorted_by'=>'3');
+        $uri_seg = count($this->uri->segment_array());
+
+        $custom_function = array(
+        'modify_row_data' => function($row, $key) {
+            if($key === 'status') $row->$key = $this->doc_status[$row->$key];
+            if($key === 'iddocument') $_idItem = $row->$key;
+            return '';
+        });
+
+        $query = $this->doc->readAll($start, $limit, $filter);
+
+        $data['doctable'] = $this->tablegenerator->generateTable(array(
+            'type' => 'ITEM',
+            'idAndName' => 'doctable',
+            'no_start' => $start + 1,
+            'result' => $query->result(),
+            'iditem' => 'iddocument',
+            'header' => array(
+                array('data' => 'Ref ID', 'width' => '8%'),
+                array('data' => 'Type', 'width' => '10%'),
+                array('data' => 'Description', 'width' => '25%'),
+                array('data' => 'Created For', 'width' => '10%'),
+                array('data' => 'Status', 'width' => '10%'),
+                array('data' => 'Priority', 'width' => '10%'),
+                array('data' => 'Created Date', 'width' => '10%'),
+                array('data' => 'View', 'width' => '7%'),
+            ),
+            'itemlist' => array('iddocument'=>'text','type'=>'text','description'=>'longtext_with_excerpt','created_for_name'=>'text','status'=>'text','priority'=>'text','created_date'=>'text',
+                array('data' => 'View', 'link' => '', 'use_iditem' => false, 'action_group' => false, 'use_btn' => true, 'icon_btn'=>'-')),
+            'directory' => '',
+            'controller' => 'docc',
+            'custom_function' => $custom_function,
+            'useedit' => false,
+            'usedelete' => false,
+            'usecheckbox' => false,
+            'action_group' => false,
+            'moreAttr' => 'width=90%',
+            'pagination' => array('base_url' => base_url().'index.php/docc/pending/', 'total_rows' => $this->doc->row_count($filter), 'per_page' => $limit, 'num_links' => 10,'uri_segment'=>$uri_seg),
+        ));
+
+        $this->load_view_with_layout('Document List', 'doc/pending', $data);
+    }
+
+    function document_wizard_view($iddocument='null'){
+        $action = 'null';
+        if($this->input->post()) $action = $this->input->post('action');
+
+        $setting = array('current_id'=>$iddocument,'action'=>$action);
+
+        $data['doc'] = $this->doc->get_lasted_document($setting)->row();
+        $data['imgpath'] = $this->doc_imgpath;
+        if($data['doc']->image == '') $data['doc']->image = 'no_image.jpg';
+
+        $this->load_view_with_layout('Document: ','doc/wizard',$data);
+    }
+
+    function statistic(){
+        $data['statistic'] = $this->doc->statistic()->row();
+
+        $this->load_view_with_layout('Document Statistic','doc/statistic',$data);
+    }
+
+    function send_statistic(){
+        $this->load->library('email');
+        $this->email->from('info@docs.com','testing docs');
+        $this->email->to('im.ronny89.hehehe@gmail.com');
+        $this->email->subject('Testing Send Statistic');
+        $this->email->message('Testing Message Sending');
+
+        if($this->email->send()){
+            $result['result'] = 1;
+        }else{
+            $result['result'] = 0;
+            $result['error'] = 'Error sending email. Please try again later.. '
+        }
+        $this->base->generate_confirmation($result['result'], array(
+            'message' => 'Inserting data success',
+            'redirect' => 'docc/statistic/',
+                ), array(
+            'message' => $result['error'],
+            'redirect' => 'docc/statistic/',
+        ));
+
+    }
+
+    function view($id){
+        $data['doc'] = $this->doc->read($id)->row();
+        $data['doc']->status = $this->doc_status[$data['doc']->status];
+        $data['imgpath'] = $this->doc_imgpath;
+        $data['iditem'] = $id;
+        if($data['doc']->image == '') $data['doc']->image = 'no_image.jpg';
+
+        $this->load_view_with_layout('Detail Document','doc/view',$data);
+    }
+
+    function change_status($id){
+        if($this->input->post()){
+            $input = array(
+                'status' => $this->input->post('status_selected'),
+                'status_edit_date' => date('Y-m-d H:m:s'),
+            );
+
+            $result = $this->doc->update($input,'where iddocument = '.$id);
+            $this->base->generate_confirmation($result['result'], array(
+                'message' => 'Inserting data success',
+                'redirect' => 'docc/view/'.$id,
+                    ), array(
+                'message' => $result['error'],
+                'redirect' => 'docc/view/'.$id,
+            ));
+        }
+    }
+
+    function bulk_action(){
+        // $this->bulk_action_list = array('-1'=>'MARK AS REJECTED','0'=>'SHARE VIA EMAIL','1'=>'MARK AS APPROVED', '2'=>'DELETE');
+
+        if($this->input->post()){
+            $bulk_selected = $this->input->post('bulk_action');
+
+            $selected_id = $this->input->post('selected_row_id');
+
+            if($bulk_selected == '-1' || $bulk_selected == '1'){
+                $result = $this->doc->update(array('status'=>$bulk_selected),'where iddocument in ('.$selected_id.')');
+            }else if($bulk_selected == '2'){
+                $result = $this->doc->update(array('isdeleted'=>1), 'where iddocument in ('.$selected_id.')');
+            }
+
+            $this->base->generate_confirmation($result['result'], array(
+                'message' => 'Updating data success',
+                'redirect' => 'docc/',
+                    ), array(
+                'message' => $result['error'],
+                'redirect' => 'docc/',
+            ));
+        }
+    }
+
+    function filter(){
+        if($this->input->post()){
+            $filter = array(
+                'ref_id' => $this->input->post('ref_id'),
+                'status' => trim($this->input->post('status')),
+                'status_date' => $this->input->post('status_date'),
+                'type' => $this->input->post('type'),
+                'created_by' => $this->input->post('created_by'),
+                'created_for' => $this->input->post('created_for'),
+                'priority' => $this->input->post('priority'),
+                'sorted_by' => $this->input->post('sorted_by'),
+            );
+
+            $this->console('filter before submit >>>');
+            $this->console($filter);
+            redirect(base_url().'index.php/docc/index'.$this->construct_url($filter,0));
+        }
+    }
+
+    function add() {
+        $data = $this->base->baseImport(array(
+            'tinymce' => array('button1' => 'bold,italic,underline', 'button2' => '', 'button3' => ''),
+            'datepicker',
+        ));
+        $data['doc_types'] = $this->doc_types;
+        $data['created_for_list'] = $this->user->get_list_by_role('DIRECTOR');
+        $data['priority_list'] = $this->priority_list;
+        $data['imgpath'] = $this->doc_imgpath;
+
+        $this->load_view_with_layout('Add New Document', 'doc/add', $data);
+    }
+
+    function addItem() {
+        if ($this->input->post()) {
+            $input = array(
+                'description' => htmlentities($this->input->post('doc_desc'),ENT_QUOTES),
+                'priority' => $this->input->post('priority'),
+                'type' => $this->input->post('type'),
+                'created_for' => $this->input->post('created_for'),
+                'created_by' => $this->user_login['iduser'],
+                'status' => 0,
+
+            );
+
+            if($_FILES['userfile']['name'] != null){
+                $result = $this->base->do_upload($this->upload_setting);
+
+                if($result['error'] == '' && $result['file'] != null){
+                    $result = $this->base->manipulate_image('resize',$result['file'],$this->resize);
+                }
+
+                // Jika resize berhasil maka masukkan ke database
+                if($result['result'] > 0){
+                    $input['image'] = $result['file']['file_name'];
+                }
+            }
+
+            $result = $this->doc->insert($input);
+
+            $this->base->generate_confirmation($result['result'], array(
+                'message' => 'Inserting data success',
+                'redirect' => 'docc/index',
+                    ), array(
+                'message' => $result['error'],
+                'redirect' => 'docc/index',
+            ));
+        }
+        else
+            redirect('docc/');
+    }
+
+    function delete($id) {
+        $doc = $this->doc->read($id)->row();
+
+        $this->base->deleteIfExists($this->image_real_path,$doc->image);
+
+        $result = $this->doc->delete('where iddocument=' . $id);
+
+        $this->base->generate_confirmation($result['result'], array(
+            'message' => 'Data has been deleted',
+            'redirect' => 'docc/',
+                ), array(
+            'message' => $result['error'],
+            'redirect' => 'docc/',
+        ));
+    }
+
+    function construct_url($filter,$page=null){
+        $add_url = '/';
+        $urls = array('ref_id'=>'ref_id/','status'=>'status/','status_date'=>'status_date/','type'=>'type/','created_by'=>'created_by/','created_for'=>'created_for/','priority'=>'priority/','sorted_by'=>'sorted_by/','page'=>'page/');
+        if($page !== null) $filter += array('page' => '0');
+
+        $keys = array_keys($urls);
+        foreach ($keys as $key){
+           if($filter[$key] != 'null' && $filter[$key] != '') $add_url .= $urls[$key].$filter[$key].'/';
+        }
+
+        return $add_url;
+    }
+
+}
+
+?>

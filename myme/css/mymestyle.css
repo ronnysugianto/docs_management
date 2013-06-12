@@ -1,0 +1,20 @@
+.listItem {
+  padding-top: 10px;
+}
+.thumb_gallery {
+  display: block;
+  margin: auto;
+}
+.thumb_gallery li {
+  display: inline-block;
+  text-align: center;
+  margin: 3px;
+  padding: 5px;
+  background: #EDEDED;
+}
+.thumb_gallery p {
+  padding-top: 5px;
+}
+.filter-form .control-label {
+  width: 20%;
+}
