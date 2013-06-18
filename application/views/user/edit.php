@@ -7,7 +7,7 @@ if ($this->session->flashdata('confirmation')) {
 ?>
 <h2><?= $page_title; ?></h2>
 <hr/>
-<form method="post" accept-charset="utf-8" action="<?= site_url('userc/editItem/' . $idedit); ?>" class="form-horizontal">
+<form id="form-input" method="post" accept-charset="utf-8" action="<?= site_url('userc/editItem/' . $idedit); ?>" class="form-horizontal">
     <div class="control-group">
         <label class="control-label" >Username</label>
         <div class="controls">
@@ -18,6 +18,12 @@ if ($this->session->flashdata('confirmation')) {
         <label class="control-label" >Role</label>
         <div class="controls">
             <?= form_dropdown('user_role', $user_roles, $user->role); ?>
+        </div>
+    </div>
+    <div class="control-group">
+        <label class="control-label" >E-mail</label>
+        <div class="controls">
+            <input type="text" id="email" name="email" placeholder="" value="<?= $user->email; ?>" class="validate[required,custom[email]]"/>
         </div>
     </div>
     <div class="control-group">
@@ -34,3 +40,6 @@ if ($this->session->flashdata('confirmation')) {
         </div>
     </div>
 </form>
+<script type="text/javascript">
+    <?= init_validation('form-input'); ?>
+</script>

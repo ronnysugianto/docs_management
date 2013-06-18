@@ -9,19 +9,23 @@ class loginc extends MY_Controller{
     }
 
     function index(){
-        
+
         $data = $this->base->baseImport();
 
         $this->load_view_with_layout('Admin Login','login/index',$data);
     }
-    
+
     function doLogin(){
 
         if($this->input->post()){
             $isAuthorize = $this->login_model->isAuthorize($this->input->post('username'),$this->input->post('password'));
-            
+
             if($isAuthorize) {
-                $this->load_view_with_layout('Welcome','login/welcome');
+                $user_login = $this->session->userdata('userlogin');
+                if($user_login['role'] == 'DIRECTOR')
+                    redirect(base_url().'index.php/docc/document_wizard_view');
+                else
+                    $this->load_view_with_layout('Welcome','login/welcome');
             }
             else redirect('loginc/');
         }

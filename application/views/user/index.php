@@ -5,9 +5,7 @@
 } ?>
 <h2>Admin User List</h2>
 <hr/>
-<? if($can_add){ ?>
-        <button class="btn btn-primary btn-large" onclick="location.href='<?= site_url('userc/add'); ?>'">Add New User</button>
-<? } ?>
+<button class="btn btn-primary btn-large" onclick="location.href='<?= site_url('userc/add'); ?>'">Add New User</button>
 <div class="listItem">
     <?= $usertable; ?>
 </div>

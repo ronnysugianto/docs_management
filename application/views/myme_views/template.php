@@ -12,7 +12,6 @@
             /**
              * Basic Import : Twitter Bootstrap, JQuery, marshable.js
              */
-
                 link_tag($this->config->item('css_bootstrap')).
                 link_tag($this->config->item('css_bootstrap_responsive')).
                 link_tag($this->config->item('css_myme')).

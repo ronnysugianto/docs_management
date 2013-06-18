@@ -21,6 +21,12 @@ if ($this->session->flashdata('confirmation')) {
         </div>
     </div>
     <div class="control-group">
+        <label class="control-label" >E-mail</label>
+        <div class="controls">
+            <input type="text" id="email" name="email" placeholder="E-mail" value=""  class="validate[required,custom[email]]"/>
+        </div>
+    </div>
+    <div class="control-group">
         <label class="control-label" >Password</label>
         <div class="controls">
             <input type="password" id="password" name="password" placeholder="Password" value=""  class="validate[required]"/>

@@ -20,11 +20,11 @@ class user_model extends MY_Model {
     }
 
     function readAll($start, $limit) {
-        return $this->db->query('select iduser, username, role, status from users where isdeleted=0 limit ' . $start . ',' . $limit);
+        return $this->db->query('select iduser, username, email, role, status from users where isdeleted=0 limit ' . $start . ',' . $limit);
     }
 
     function read($id) {
-        return $this->db->query('select iduser, username, password, status, role from users where iduser=' . $id);
+        return $this->db->query('select iduser, username, email, password, status, role from users where iduser=' . $id);
     }
 
     function insert($data) {

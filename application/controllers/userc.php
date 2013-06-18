@@ -19,14 +19,11 @@ class userc extends MY_Controller{
         $this->user = new user_model();
         $this->user_status = array('1'=>'ACTIVE','0'=>'INACTIVE');
     }
-    
+
     function index($start=0,$limit=10){
         $userlogin = $this->session->userdata('userlogin');
         $ability = $userlogin['ability'];
-        
-        if($ability['add_user'] == false) $data['can_add'] = false;
-        else $data['can_add'] = true;
-        
+
         $custom_function = array(
         'modify_row_data' => function($row, $key) {
             if ($key == 'status'){
@@ -35,7 +32,7 @@ class userc extends MY_Controller{
             }
             return '';
         });
-        
+
         $query = $this->user->readAll($start,$limit);
         $data['usertable'] = $this->tablegenerator->generateTable(array(
             'type' => 'ITEM',
@@ -43,8 +40,8 @@ class userc extends MY_Controller{
             'no_start'=>$start+1,
             'result' => $query->result(),
             'iditem' => 'iduser',
-            'header' => array(array('data'=>'Username','width'=>'40%'),array('data'=>'Role','filter'=>'false','width'=>'30%'), array('data'=>'Status','filter'=>'false','width'=>'20%')),
-            'itemlist' => array('username'=>'text','role'=>'text','status'=>'text',array('data'=>'Password','link'=>base_url().'index.php/userc/pass/','use_iditem'=>true,'action_group'=>true,'use_btn'=>false)),
+            'header' => array(array('data'=>'Username','width'=>'40%'),array('data'=>'Role','filter'=>'false','width'=>'30%'),array('data'=>'E-mail','filter'=>'false','width'=>'20%'), array('data'=>'Status','filter'=>'false','width'=>'20%')),
+            'itemlist' => array('username'=>'text','role'=>'text','email'=>'text','status'=>'text',array('data'=>'Password','link'=>base_url().'index.php/userc/pass/','use_iditem'=>true,'action_group'=>true,'use_btn'=>false)),
             'directory' => '',
             'controller' => 'userc',
             'custom_function' => $custom_function,
@@ -78,7 +75,7 @@ class userc extends MY_Controller{
         $data['user_roles'] = $this->user_roles;
         $this->load_view_with_layout('Add New User','user/add',$data);
     }
-    
+
     function pass($id){
         $data['idedit'] = $id;
         $this->load_view_with_layout('Change Password','user/pass',$data);
@@ -91,6 +88,7 @@ class userc extends MY_Controller{
                 'password' => $this->base->ecnryptThis($this->input->post('password')),
                 'role' => $this->input->post('user_role'),
                 'status' => '1',
+                'email' => $this->input->post('email'),
                 'isdeleted' => '0',
                 'created_date' => date('Y-m-d'),
                 'created_by' => $this->user_login['iduser'],
@@ -113,6 +111,7 @@ class userc extends MY_Controller{
         if($this->input->post()){
             $input = array(
                 'role' => $this->input->post('user_role'),
+                'email' => $this->input->post('email'),
                 'status' => $this->input->post('user_status'),
             );
             $result = $this->user->update($input,'where iduser='.$id);
@@ -127,12 +126,12 @@ class userc extends MY_Controller{
 
         }else redirect('userc/');
     }
-    
+
     function changePass($id){
 
         if($this->input->post()){
             $user = $this->user->read($id)->row();
-            
+
             $redirect = 'userc/profile';
             if(!$this->base->check($this->input->post('old_pass'), $user->password)){
                 $redirect = 'userc/pass/'.$id;
@@ -156,13 +155,13 @@ class userc extends MY_Controller{
     function change_pass_from_profile($id){
         if($this->input->post()){
             $user = $this->user->read($id)->row();
-            
+
             $redirect = 'userc/profile/'.$id;
             $input = array(
                 'password' => $this->base->ecnryptThis($this->input->post('new_pass')),
             );
             $result = $this->user->update($input, 'where iduser='.$id);
-            
+
             $this->base->generate_confirmation($result['result'],array(
                 'message' => 'Updating data success',
                 'redirect' => $redirect,
@@ -172,7 +171,7 @@ class userc extends MY_Controller{
              ));
         }
     }
-    
+
     function delete($id){
         $result = $this->user->delete('where iduser='.$id);
 

@@ -7,18 +7,20 @@
                 ?>
                 <ul class="nav">
 
-                    <?$userlogin = $this->session->userdata('userlogin'); ?>
+                    <?
+                        $userlogin = $this->session->userdata('userlogin');
 
-                    <? if($userlogin['role'] === "ADMIN" || $userlogin['role'] === "SUPERUSER") { ?>
-                        <li><a href="<?= site_url('userc/index'); ?>">User</a></li>
-                    <? } ?>
-                    <li><a href="<?= site_url('docc/index'); ?>">Document</a></li>
-
-                    <? //if($userlogin['role'] === "SECRETARY") { ?>
-                        <li><a href="<?= site_url('docc/approved'); ?>">Approved</a></li>
-                        <li><a href="<?= site_url('docc/pending'); ?>">Pending</a></li>
-                        <li><a href="<?= site_url('docc/statistic'); ?>">Statistic</a></li>
-                    <? //} ?>
+                        if(isset($userlogin['ability']['user_management']))
+                            echo "<li><a href='".site_url('userc/index')."' >User</a></li>";
+                        if(isset($userlogin['ability']['document_management']))
+                            echo "<li><a href='".site_url('docc/index')."'>Document</a></li>";
+                        if(isset($userlogin['ability']['approved_document']))
+                            echo "<li><a href='".site_url('docc/approved')."'>Document Approved</a></li>";
+                        if(isset($userlogin['ability']['pending_document']))
+                            echo "<li><a href='".site_url('docc/pending')."'>Document Pending</a></li>";
+                        if(isset($userlogin['ability']['document_statistic']))
+                            echo "<li><a href='".site_url('docc/statistic')."'>Statistic</a></li>";
+                    ?>
                 </ul>
 
                 <ul class="nav pull-right">

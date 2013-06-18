@@ -2,14 +2,36 @@
 
 class login_model extends MY_Model{
     var $USER_ROLE;
-    
+
     function __construct() {
         parent:: __construct();
         $this->load->helper('url');
-        
-        $this->USER_ROLE['ADMIN'] = array('add_user'=>true, 'edit_ap'=>true, 'add_segmen'=>true,'add_site'=>true, 'edit_site'=>true, 'add_area'=>true, 'edit_area'=>true, 'add_ap'=>true);
-        $this->USER_ROLE['SECRETARY'] = array('add_user'=>true, 'edit_ap'=>true, 'add_segmen'=>true,'add_site'=>true, 'edit_site'=>true, 'add_area'=>true, 'edit_area'=>true, 'add_ap'=>false);
-        $this->USER_ROLE['DIRECTOR'] = array('add_user'=>false, 'edit_ap'=>false, 'add_segmen'=>false,'add_site'=>false, 'edit_site'=>false, 'add_area'=>false, 'edit_area'=>false, 'add_ap'=>true);
+
+        /*
+            ROLE List :
+            1. user_management > Add, Edit, Delete User Management
+            2. document_management > type: ADMIN > Document management with full filtering options
+            3. document_management > type: SECRETARY > Document management with spesific filtering options and only documents created by himself
+            4. document_statistic > Statistic document report created by himself
+        */
+        // Filtering for role : ADMIN
+        $DOC_FILTER_ROLE['ADMIN'] = array('ref_id','status','status_edit_date','type','created_by','created_for','created_date','priority','sorted_by');
+        // Filtering for role SECRETARY
+        $DOC_FILTER_ROLE['SECRETARY'] = array('ref_id','status','created_date','created_for','status_edit_date');
+
+        $this->USER_ROLE['ADMIN'] = array(
+            'user_management'=>array(),
+            'document_management'=>array('filter_role'=>$DOC_FILTER_ROLE['ADMIN'])
+            );
+        $this->USER_ROLE['SECRETARY'] = array(
+            'document_management'=>array('add_document'=>null,'delete_document'=>null,'bulk_action'=>null,'filter_role'=>$DOC_FILTER_ROLE['SECRETARY']),
+            'document_statistic'=>array('send_email'=>null)
+            );
+        $this->USER_ROLE['DIRECTOR'] = array(
+            'approved_document'=>array(),
+            'pending_document'=>array(),
+            'wizard_screen'=>array(),
+            );
     }
 
     /**
@@ -33,7 +55,6 @@ class login_model extends MY_Model{
 
         if($isFound){
             $this->load->library('session');
-            $row->role = 'ADMIN';
             $userlogin = array(
                     'username' => $row->username,
                     'iduser' => $row->iduser,

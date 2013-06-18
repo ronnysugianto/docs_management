@@ -5,6 +5,7 @@
  *
  */
 ini_set('display_errors',1);
+ini_set('date.timezone', 'Asia/Jakarta');
 class MY_Controller extends CI_Controller{
     /**
      * @var base Object variable from class base.php (libraries/myme_library/base)
@@ -13,6 +14,7 @@ class MY_Controller extends CI_Controller{
     var $user_roles;
     var $doc_status;
     var $doc_types;
+    var $archived_status;
     var $priority_list;
     var $sorted_by;
     var $doc_imgpath;
@@ -28,6 +30,7 @@ class MY_Controller extends CI_Controller{
 
         $this->user_roles = array('ADMIN'=>'ADMIN','SECRETARY'=>'SECRETARY','DIRECTOR'=>'DIRECTOR');
         $this->doc_status = array('-1'=>'REJECTED','0'=>'WAITING','1'=>'APPROVED');
+        $this->archived_status = array('0'=>'UN-ARCHIVED','1'=>'ARCHIVED');
         $this->doc_types = array('PR'=>'PR','PO'=>'PO');
         $this->priority_list = array('NORMAL' => 'NORMAL','URGENT' => 'URGENT');
         $this->sorted_by = array('0'=>'Priority','1'=>'Created By','2'=>'Status Edited Date');

@@ -48,6 +48,7 @@ class base{
             $data['baseimport'] .= link_tag($this->ci->config->item('css_colorpicker'));
             $data['baseimport'] .= script_tag($this->ci->config->item('script_colorpicker'));
         }
+        // belum ditesting - belum bootstrap
         if(key_exists('autocomplete',$addition) || $this->is_array_has_value('autocomplete', $addition)){
             $autocomplete = array();
 
@@ -57,6 +58,7 @@ class base{
             $data['baseimport'] .= link_tag($this->ci->config->item('css_autocomplete'));
             $data['baseimport'] .= script_tag($this->ci->config->item('script_autocomplete'));
         }
+        // belum ditesting - belum bootstrap
         if(key_exists('timepicker',$addition) || $this->is_array_has_value('timepicker', $addition)){
             $timepicker = array();
 
@@ -66,6 +68,7 @@ class base{
             $data['baseimport'] .= link_tag($this->ci->config->item('css_timepicker'));
             $data['baseimport'] .= script_tag($this->ci->config->item('script_timepicker'));
         }
+        // belum ditesting - belum bootstrap
         if(key_exists('chart',$addition) || $this->is_array_has_value('chart', $addition)){
             $chart = array();
 
@@ -202,7 +205,7 @@ EOT;
     }
 
     /**
-     * Convert array to become separated each string, ex : "1,2,3" will become "1","2","3"
+     * Convert array to become separated each string, ex : "1,2,3" will become ",""12","3"
      * @param $arry Array that want to be converted
      * @return string
      */
@@ -240,12 +243,12 @@ EOT;
             if($result > 0){
                 $this->ci->session->set_flashdata('confirmation',
                     array('type' => 'success','message' => $success['message']));
-                redirect($success['redirect']);
+                if(isset($success['redirect'])) redirect($success['redirect']);
             }
             else {
                 $this->ci->session->set_flashdata('confirmation',
                     array('type' => 'error','message' => $error['message']));
-                redirect($error['redirect']);
+                if(isset($success['redirect'])) redirect($error['redirect']);
             }
         }
         return false;
@@ -312,7 +315,9 @@ EOT;
         if($type == 'resize'){
             if($manipulate == null) return $result;
             $manipulate['source_image'] = $image_data['full_path'];
-            $this->ci->load->library('image_lib', $manipulate);
+            $this->ci->load->library('image_lib');
+            $this->ci->image_lib->clear();
+            $this->ci->image_lib->initialize($manipulate);
             if(!$this->ci->image_lib->resize()){
                 $err = $this->ci->image_lib->display_errors('<p>', '</p>');
                 $result['result'] = 0;

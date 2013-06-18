@@ -251,23 +251,23 @@ EOT;
 EOT;
         }
 
-        if($tableSetting['usecheckbox'] == true){
-            $_custom_additional_code .= <<<EOT
-                <script type="text/javascript">
-                    $(document).ready(function(){
-                        $( "#$tableSetting[idAndName]_checkAll").change(function(){
-                            checkAll('$tableSetting[idAndName]_check[]','$tableSetting[idAndName]_checkAll');
-                         });
-                     });
+//         if($tableSetting['usecheckbox'] == true){
+//             $_custom_additional_code .= <<<EOT
+//                 <script type="text/javascript">
+//                     $(document).ready(function(){
+//                         $( "#$tableSetting[idAndName]_checkAll").change(function(){
+//                             checkAll('$tableSetting[idAndName]_check[]','$tableSetting[idAndName]_checkAll');
+//                          });
+//                      });
 
-                     function checkAll(name,btn){
-                        var checked = document.getElementById(btn).checked;
-                        checkAllCheckboxes(name,checked);
-                     }
-                </script>
-EOT;
+//                      function checkAll(name,btn){
+//                         var checked = document.getElementById(btn).checked;
+//                         checkAllCheckboxes(name,checked);
+//                      }
+//                 </script>
+// EOT;
 
-        }
+//         }
 
         $this->ci->table->set_heading($tableSetting['header']);
         $_response = $this->ci->table->generate().$_custom_additional_code;
